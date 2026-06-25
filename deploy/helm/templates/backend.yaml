@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector: { app: backend }
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: {{ .Values.replicas.backend }}
+  selector:
+    matchLabels: { app: backend }
+  template:
+    metadata:
+      labels: { app: backend }
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.image.backend }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+          envFrom:
+            - configMapRef: { name: nexora-config }
+            - secretRef: { name: nexora-secret }
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          resources: {{- toYaml .Values.resources.backend | nindent 12 }}
+      volumes:
+        - name: uploads
+          emptyDir: {}

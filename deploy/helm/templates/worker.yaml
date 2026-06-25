@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  replicas: {{ .Values.replicas.worker }}
+  selector:
+    matchLabels: { app: worker }
+  template:
+    metadata:
+      labels: { app: worker }
+    spec:
+      containers:
+        - name: worker
+          image: {{ .Values.image.backend }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+          envFrom:
+            - configMapRef: { name: nexora-config }
+            - secretRef: { name: nexora-secret }
+          resources: {{- toYaml .Values.resources.backend | nindent 12 }}

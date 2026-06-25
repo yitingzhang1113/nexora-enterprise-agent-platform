@@ -1,0 +1,28 @@
+# 一次性 Job: Alembic 迁移 + 写入医药种子数据
+# 学习点: 用 Job 做「一次性运维动作」, 与长期运行的 Deployment 分离。
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate-seed
+  namespace: nexora
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate-seed
+          image: nexora/backend:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "running migrations..."
+              alembic upgrade head
+              echo "seeding pharma data..."
+              python -m seed.seed
+          envFrom:
+            - configMapRef: { name: nexora-config }
+            - secretRef: { name: nexora-secret }

@@ -1,0 +1,42 @@
+image:
+  backend: nexora/backend:latest
+  frontend: nexora/frontend:latest
+  pullPolicy: IfNotPresent
+
+replicas:
+  backend: 1
+  worker: 1
+  frontend: 1
+
+# 应用配置 (注入 ConfigMap)
+config:
+  REDIS_URL: "redis://redis:6379/0"
+  OLLAMA_BASE_URL: "http://ollama:11434"
+  GEN_MODEL: "llama3.1"
+  EMBED_MODEL: "bge-m3"
+  EMBED_DIM: "1024"
+  LLM_PROVIDER: "ollama"
+  TOP_K: "5"
+  CHUNK_SIZE: "1000"
+  CHUNK_OVERLAP: "150"
+  UPLOAD_DIR: "/app/uploads"
+  CORS_ORIGINS: "http://nexora.local"
+
+# 敏感配置 (注入 Secret)
+secret:
+  DATABASE_URL: "postgresql+psycopg://nexora:nexora@postgres:5432/nexora"
+  ANTHROPIC_API_KEY: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  frontendHost: nexora.local
+  backendHost: api.nexora.local
+
+resources:
+  backend:
+    requests: { cpu: "100m", memory: "256Mi" }
+    limits: { cpu: "1", memory: "1Gi" }
+  frontend:
+    requests: { cpu: "50m", memory: "128Mi" }
+    limits: { cpu: "500m", memory: "512Mi" }

@@ -1,0 +1,56 @@
+# 无状态 API: backend (Deployment + Service)
+# 注: uploads 用 emptyDir 仅作演示; 生产应换 RWX PVC 或对象存储 (对应 Onyx 的 MinIO)。
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: nexora
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: nexora
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: nexora/backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+          envFrom:
+            - configMapRef: { name: nexora-config }
+            - secretRef: { name: nexora-secret }
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "1Gi" }
+      volumes:
+        - name: uploads
+          emptyDir: {}

@@ -1,0 +1,27 @@
+# 无状态 Celery worker (Deployment, 无 Service)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: nexora
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: nexora/backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+          envFrom:
+            - configMapRef: { name: nexora-config }
+            - secretRef: { name: nexora-secret }
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "1Gi" }

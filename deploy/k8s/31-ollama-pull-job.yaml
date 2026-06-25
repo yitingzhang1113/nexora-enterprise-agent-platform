@@ -1,0 +1,29 @@
+# 一次性 Job: 拉取 Ollama 模型 (生成 + 嵌入)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull
+  namespace: nexora
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: ollama-pull
+          image: ollama/ollama:latest
+          env:
+            - name: OLLAMA_HOST
+              value: "ollama:11434"
+            - name: GEN_MODEL
+              valueFrom: { configMapKeyRef: { name: nexora-config, key: GEN_MODEL } }
+            - name: EMBED_MODEL
+              valueFrom: { configMapKeyRef: { name: nexora-config, key: EMBED_MODEL } }
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              ollama pull "$GEN_MODEL"
+              ollama pull "$EMBED_MODEL"
+              echo "models pulled"

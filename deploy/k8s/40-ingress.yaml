@@ -1,0 +1,37 @@
+# Ingress: 两个 host
+#   nexora.local      -> frontend
+#   api.nexora.local  -> backend
+# 本地需在 /etc/hosts 添加:  127.0.0.1 nexora.local api.nexora.local
+# 并安装 ingress controller (如 ingress-nginx)。
+# 注意: 前端镜像构建时需设 NEXT_PUBLIC_API_BASE=http://api.nexora.local
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexora-ingress
+  namespace: nexora
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"  # 允许 SSE 流式
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: nexora.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
+    - host: api.nexora.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8000

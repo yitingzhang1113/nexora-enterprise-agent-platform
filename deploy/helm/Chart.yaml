@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nexora
+description: Nexora 应用层 Helm chart (backend/worker/frontend)。数据存储(postgres/redis/ollama)假定已由 deploy/k8s 或外部提供。
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
