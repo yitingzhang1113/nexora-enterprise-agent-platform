@@ -8,23 +8,29 @@
 
 ## 它能做什么
 
-- 📥 **导入资料**：上传 PDF/TXT/MD，或抓取网页 → 异步切块、嵌入、写入向量库
-- 🔎 **混合检索**：pgvector 向量召回 + Postgres 全文召回 → RRF 融合排序
+- 📥 **导入资料**：上传 PDF/TXT/MD，或抓取网页 → 异步切块、嵌入、写入 OpenSearch
+- 🔎 **混合检索**：OpenSearch kNN(向量) + BM25(关键词, `cjk` 中文分词) → RRF 融合
 - 💬 **RAG 问答**：检索增强生成，流式输出，回答末尾标注 `[n]` 引用并可展开来源
-- 🤖 **Agent 模式**：模型用 `search_docs` / `calculator` 工具自主检索与计算
+- 🤖 **Agent 模式**：模型用 `search_docs` / `calculator` 工具检索与计算 (含工具调用时间线)
 - 🧑‍⚕️ **多助手 (Persona)**：每个助手有自己的 system prompt 与可用工具
+- 🖥️ **Onyx 风格 UI**：左侧栏(新建/历史/助手/后台) + 聊天 + 右侧来源面板 + Admin 后台，浅/深色
 - ☸️ **两种部署**：本地 docker-compose；生产 Kubernetes (manifests + Helm)
+
+> **v2 重构**：架构与 UI 进一步对齐 Onyx —— 向量库换 **OpenSearch**(走可插拔 `DocumentIndex` 接口)、
+> 嵌入拆为独立 **model_server**、LLM 统一走 **LiteLLM**、后端按 Onyx 模块布局(`/api` 前缀、SearchTool 作为 RAG 核心)、
+> 前端整套 Onyx 设计语言(Tailwind + Radix + Phosphor)。
 
 ## 技术栈
 
 | 层 | 选型 | 对应 Onyx |
 |---|---|---|
-| 后端 | FastAPI + SQLAlchemy + Alembic | 同 |
+| 后端 | FastAPI + SQLAlchemy + Alembic (`nexora/` 模块布局, `/api` 前缀) | 同 |
 | 异步 | Celery + Redis | 同 |
-| 关系库 | PostgreSQL | 同 |
-| 向量/全文 | **pgvector + tsvector + RRF** | Onyx 用 Vespa |
-| LLM/嵌入 | **Ollama** (可切 Claude) | 多 provider |
-| 前端 | Next.js 15 + React | 同 |
+| 关系库 | PostgreSQL (仅元数据; chunk 不入库) | 同 |
+| 向量/检索 | **OpenSearch** kNN + BM25 + RRF (`document_index` 可插拔接口) | Onyx 用 Vespa/OpenSearch |
+| 嵌入 | 独立 **model_server** (代理 Ollama `bge-m3`) | 独立 model server |
+| LLM | **LiteLLM** (`ollama/qwen2.5:3b`，可切 Claude/OpenAI) | LiteLLM 多 provider |
+| 前端 | Next.js 15 + Tailwind + Radix + Phosphor + SWR + Zustand | 同 (Onyx 用私有 OPAL 设计系统) |
 | 部署 | docker-compose / K8s / Helm | 同 |
 
 详见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) 的逐组件对照与取舍。
@@ -46,12 +52,13 @@ docker compose run --rm backend python -m seed.seed
 
 ### 演示脚本
 
-1. 进入 http://localhost:3000/chat ，助手选「医药知识助手」。
-2. 问：**「二甲双胍的常用起始剂量是多少？」** → 观察流式回答 + 引用卡片。
-3. 勾选 **Agent 模式**，问：**「我每天吃 3 次，每次 0.5 克二甲双胍，一天总共多少毫克？」**
-   → 观察模型调用 `calculator` 工具 (会显示调用轨迹)。
-4. 在「文档」页上传你自己的 PDF/MD，或抓取一个网页，看索引任务状态变为 `success`。
-5. 在 http://localhost:8000/docs 直接调 `POST /search` 体验混合检索的 `vector_rank` / `keyword_rank`。
+1. 进入 http://localhost:3000 ，左侧栏「助手」里选「医药知识助手」。
+2. 问：**「二甲双胍的常用起始剂量是多少？」** → 观察流式回答 + 引用 chips，点引用展开右侧来源面板。
+3. 开顶栏 **Agent 模式**，问：**「布洛芬和华法林一起用有什么风险？请查资料」**
+   → 观察 `search_docs` 工具调用时间线。
+4. 进「管理后台」→ 文档 / 连接器：上传 PDF/MD 或抓取网页，看索引任务状态变 `success`。
+5. 直接调 `POST /api/search`(body `{"query":"二甲双胍的起始剂量"}`)体验混合检索的
+   `vector_rank` / `keyword_rank`(中文关键词现在也会命中)。
 
 ## 本地实测说明 & 已知点
 

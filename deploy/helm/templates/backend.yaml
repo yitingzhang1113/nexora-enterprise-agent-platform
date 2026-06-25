@@ -24,7 +24,7 @@ spec:
         - name: backend
           image: {{ .Values.image.backend }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+          command: ["uvicorn", "nexora.main:app", "--host", "0.0.0.0", "--port", "8000"]
           envFrom:
             - configMapRef: { name: nexora-config }
             - secretRef: { name: nexora-secret }

@@ -18,5 +18,5 @@ COPY . .
 
 EXPOSE 8000
 
-# 默认启动 API；worker 用 compose/k8s 覆盖 command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 默认启动 API；worker / model_server 用 compose/k8s 覆盖 command
+CMD ["uvicorn", "nexora.main:app", "--host", "0.0.0.0", "--port", "8000"]

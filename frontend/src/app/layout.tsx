@@ -1,29 +1,21 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Hanken_Grotesk, DM_Mono } from "next/font/google";
+import { Providers } from "@/components/providers";
+
+const sans = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
+const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Nexora —— 医药 Agent / RAG 平台",
-  description: "仿 Onyx 的学习型企业级 Agent 平台",
+  description: "仿 Onyx 的企业级 Agent 平台 (OpenSearch + LiteLLM)",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
-      <body>
-        <nav className="nav">
-          <span className="brand">💊 Nexora</span>
-          <Link href="/chat">聊天</Link>
-          <Link href="/documents">文档</Link>
-          <Link href="/assistants">助手</Link>
-          <span style={{ flex: 1 }} />
-          <span className="muted">学习型 · 医药 domain</span>
-        </nav>
-        {children}
+    <html lang="zh-CN" suppressHydrationWarning className={`${sans.variable} ${mono.variable}`}>
+      <body className="font-sans antialiased">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

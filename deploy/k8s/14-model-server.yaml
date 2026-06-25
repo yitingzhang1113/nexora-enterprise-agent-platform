@@ -1,0 +1,45 @@
+# 无状态: model_server (嵌入服务, 复用 backend 镜像)
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-server
+  namespace: nexora
+spec:
+  selector:
+    app: model-server
+  ports:
+    - port: 9000
+      targetPort: 9000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-server
+  namespace: nexora
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-server
+  template:
+    metadata:
+      labels:
+        app: model-server
+    spec:
+      containers:
+        - name: model-server
+          image: nexora/backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+          envFrom:
+            - configMapRef: { name: nexora-config }
+            - secretRef: { name: nexora-secret }
+          ports:
+            - containerPort: 9000
+          readinessProbe:
+            httpGet: { path: /health, port: 9000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "50m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }

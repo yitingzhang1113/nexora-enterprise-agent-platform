@@ -1,19 +1,16 @@
-"""initial schema (pgvector extension + 所有表 + 索引)
+"""initial schema v2 (Postgres 仅元数据; chunk 在 OpenSearch)
 
 Revision ID: 0001_initial
 Revises:
-Create Date: 2026-06-24
+Create Date: 2026-06-25
 
-教学说明: 为了让初学者一眼看全建表, 这里先 CREATE EXTENSION vector,
-再用 Base.metadata.create_all 一次性建出全部表与索引 (含 HNSW / GIN)。
-生产项目通常用 alembic autogenerate 增量管理, 原理相同。
+v2 不再用 pgvector: chunk 移到 OpenSearch。这里用 create_all 一次性建出全部元数据表。
 """
 from alembic import op
 
-from app.db.base import Base
+from nexora.db.engine import Base
 
-# 触发模型注册
-import app.models  # noqa: F401
+import nexora.db.models  # noqa: F401  触发模型注册
 
 revision = "0001_initial"
 down_revision = None
@@ -22,11 +19,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    bind = op.get_bind()
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
-    Base.metadata.create_all(bind=bind)
+    Base.metadata.create_all(bind=op.get_bind())
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    Base.metadata.drop_all(bind=bind)
+    Base.metadata.drop_all(bind=op.get_bind())

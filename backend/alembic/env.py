@@ -1,14 +1,14 @@
-"""Alembic 环境：用 app 的 Base.metadata 与 settings.database_url。"""
+"""Alembic 环境 (v2): 用 nexora 的 Base.metadata 与 settings.database_url。"""
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.config import settings
-from app.db.base import Base
+from nexora.configs.app_configs import settings
+from nexora.db.engine import Base
 
-# 关键: import 模型让它们注册到 Base.metadata
-import app.models  # noqa: F401
+# import 模型让其注册到 Base.metadata
+import nexora.db.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

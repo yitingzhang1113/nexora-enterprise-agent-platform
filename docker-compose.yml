@@ -1,8 +1,8 @@
-# 本地开发一键起：postgres(pgvector) + redis + ollama + backend + worker + frontend
+# 本地开发一键起 (v2): postgres + redis + opensearch + ollama + model_server + backend + worker + frontend
 # 用法:
 #   cp .env.example .env
 #   docker compose up -d
-#   docker compose run --rm backend python -m seed.seed   # 写入医药种子数据
+#   docker compose run --rm backend python -m seed.seed   # 写入医药种子数据 (需 opensearch/model_server/ollama 就绪)
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -25,17 +25,34 @@ services:
     ports:
       - "6379:6379"
 
+  # OpenSearch: 向量(kNN) + 关键词(BM25) 混合检索 (替代 Onyx 的 Vespa)
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=Nexora_2026!"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile: { soft: 65536, hard: 65536 }
+    volumes:
+      - opensearch:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   ollama:
     image: ollama/ollama:latest
     volumes:
       - ollama:/root/.ollama
     ports:
       - "11434:11434"
-    # 若有 GPU 可解开以下配置
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices: [{capabilities: [gpu]}]
 
   # 一次性拉取所需模型 (生成 + 嵌入)，完成后退出
   ollama-pull:
@@ -47,10 +64,23 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: >
       "sleep 3 &&
-       ollama pull ${GEN_MODEL:-qwen2.5:3b} &&
+       ollama pull ${GEN_OLLAMA_MODEL:-qwen2.5:3b} &&
        ollama pull ${EMBED_MODEL:-bge-m3} &&
        echo 'models pulled'"
     restart: "no"
+
+  # 独立嵌入服务 (复用 backend 镜像, 跑 model_server.main)
+  model_server:
+    build: ./backend
+    command: ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+    env_file: .env
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    ports:
+      - "9000:9000"
+    depends_on:
+      ollama:
+        condition: service_started
 
   backend:
     build: ./backend
@@ -59,7 +89,10 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nexora}:${POSTGRES_PASSWORD:-nexora}@postgres:5432/${POSTGRES_DB:-nexora}
       REDIS_URL: redis://redis:6379/0
+      OPENSEARCH_URL: http://opensearch:9200
+      MODEL_SERVER_URL: http://model_server:9000
       OLLAMA_BASE_URL: http://ollama:11434
+      LLM_MODEL: ${LLM_MODEL:-ollama/qwen2.5:3b}
       UPLOAD_DIR: /app/uploads
     volumes:
       - uploads:/app/uploads
@@ -70,17 +103,22 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      ollama:
+      opensearch:
+        condition: service_healthy
+      model_server:
         condition: service_started
 
   worker:
     build: ./backend
-    command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    command: ["celery", "-A", "nexora.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nexora}:${POSTGRES_PASSWORD:-nexora}@postgres:5432/${POSTGRES_DB:-nexora}
       REDIS_URL: redis://redis:6379/0
+      OPENSEARCH_URL: http://opensearch:9200
+      MODEL_SERVER_URL: http://model_server:9000
       OLLAMA_BASE_URL: http://ollama:11434
+      LLM_MODEL: ${LLM_MODEL:-ollama/qwen2.5:3b}
       UPLOAD_DIR: /app/uploads
     volumes:
       - uploads:/app/uploads
@@ -99,5 +137,6 @@ services:
 
 volumes:
   pgdata:
+  opensearch:
   ollama:
   uploads:

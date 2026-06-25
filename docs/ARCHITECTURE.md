@@ -1,5 +1,18 @@
 # 架构讲解 (Onyx ↔ Nexora)
 
+> **v2 更新**：为更贴近真实 Onyx，已做以下重构(本文下方部分小节仍以 v1 视角描述原理，但实际实现以此处为准)：
+> - 后端包从 `app/` 重排为 **`nexora/`** 模块布局，业务路由统一挂 **`/api`** 前缀(对齐 `onyx/server`)。
+> - 向量库由 pgvector 换成 **OpenSearch**(kNN + BM25 + 应用层 RRF)，走可插拔 **`document_index` 接口 + factory**；
+>   `content`/`title` 用 `cjk` 分析器，**中文关键词检索可用**(修复 v1 痛点)。chunk **不再入 Postgres**(只存 OpenSearch)。
+> - 嵌入拆为**独立 `model_server`**(FastAPI，默认代理 Ollama `bge-m3`)，对齐 Onyx 的 model server 边界。
+> - LLM 统一走 **LiteLLM**(`ollama/qwen2.5:3b` / `anthropic/...` / `openai/...`)。
+> - RAG 核心是 **`SearchTool`**；Agent 走工具循环(`chat/llm_loop.py`)。
+> - 前端整套 **Onyx 设计语言**：左侧栏 + 聊天 + 右侧来源面板 + Admin 后台，Tailwind + Radix + Phosphor + 浅/深色。
+>
+> 下面的对照表与 §3 用于理解「为什么这样选」，pgvector 一节作为历史对照保留。
+
+
+
 本文把 Onyx 的真实架构与本项目逐组件对照，并解释「我们为什么这样简化」。
 目标是让你既能跑通 MVP，又能理解将来做真正企业级平台时该如何取舍。
 

@@ -1,5 +1,4 @@
-# 非敏感配置 (ConfigMap) + 敏感配置 (Secret)
-# 学习点: K8s 中「配置与镜像解耦」—— 同一镜像在不同环境注入不同配置。
+# 非敏感配置 (ConfigMap) + 敏感配置 (Secret) —— v2
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,11 +6,13 @@ metadata:
   namespace: nexora
 data:
   REDIS_URL: "redis://redis:6379/0"
+  OPENSEARCH_URL: "http://opensearch:9200"
+  OPENSEARCH_INDEX: "nexora_chunks"
+  MODEL_SERVER_URL: "http://model-server:9000"
   OLLAMA_BASE_URL: "http://ollama:11434"
-  GEN_MODEL: "llama3.1"
   EMBED_MODEL: "bge-m3"
   EMBED_DIM: "1024"
-  LLM_PROVIDER: "ollama"
+  LLM_MODEL: "ollama/qwen2.5:3b"
   TOP_K: "5"
   CHUNK_SIZE: "1000"
   CHUNK_OVERLAP: "150"
@@ -30,3 +31,4 @@ stringData:
   POSTGRES_DB: "nexora"
   DATABASE_URL: "postgresql+psycopg://nexora:nexora@postgres:5432/nexora"
   ANTHROPIC_API_KEY: ""
+  OPENAI_API_KEY: ""

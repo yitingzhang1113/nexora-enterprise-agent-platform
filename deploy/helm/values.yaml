@@ -8,14 +8,16 @@ replicas:
   worker: 1
   frontend: 1
 
-# 应用配置 (注入 ConfigMap)
+# 应用配置 (注入 ConfigMap) —— v2
 config:
   REDIS_URL: "redis://redis:6379/0"
+  OPENSEARCH_URL: "http://opensearch:9200"
+  OPENSEARCH_INDEX: "nexora_chunks"
+  MODEL_SERVER_URL: "http://model-server:9000"
   OLLAMA_BASE_URL: "http://ollama:11434"
-  GEN_MODEL: "llama3.1"
   EMBED_MODEL: "bge-m3"
   EMBED_DIM: "1024"
-  LLM_PROVIDER: "ollama"
+  LLM_MODEL: "ollama/qwen2.5:3b"
   TOP_K: "5"
   CHUNK_SIZE: "1000"
   CHUNK_OVERLAP: "150"
@@ -26,6 +28,7 @@ config:
 secret:
   DATABASE_URL: "postgresql+psycopg://nexora:nexora@postgres:5432/nexora"
   ANTHROPIC_API_KEY: ""
+  OPENAI_API_KEY: ""
 
 ingress:
   enabled: true

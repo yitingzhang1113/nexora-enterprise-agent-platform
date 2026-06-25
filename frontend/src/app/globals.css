@@ -1,95 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- 语义化 token (浅色) —— 对齐 Onyx OPAL 的命名思路 ---- */
 :root {
-  --bg: #0f1115;
-  --panel: #171a21;
-  --border: #262b36;
-  --text: #e6e8ee;
-  --muted: #9aa3b2;
-  --accent: #4f8cff;
-  --accent-soft: #1f2c45;
+  --background-00: #ffffff;
+  --background-01: #f7f8fa;
+  --background-02: #eef0f4;
+  --background-03: #e3e6ec;
+  --background-04: #d7dbe3;
+
+  --text-01: #8a92a3;
+  --text-02: #6b7280;
+  --text-03: #4b5563;
+  --text-04: #2c3340;
+  --text-05: #11151c;
+  --text-inverted: #ffffff;
+
+  --border-01: #e5e8ee;
+  --border-02: #d4d9e2;
+  --border-03: #c2c9d6;
+
+  --accent-05: #4f8cff;
+  --accent-06: #3a76e8;
+  --accent-soft: #e8f0ff;
+
+  --danger-05: #e5484d;
+  --success-05: #30a46c;
+  --warning-05: #d9920a;
 }
 
-* { box-sizing: border-box; }
+/* ---- 深色 ---- */
+.dark {
+  --background-00: #0f1115;
+  --background-01: #151821;
+  --background-02: #1b1f2a;
+  --background-03: #232836;
+  --background-04: #2c3343;
 
-body {
+  --text-01: #6b7385;
+  --text-02: #8a93a6;
+  --text-03: #aab2c2;
+  --text-04: #cdd3df;
+  --text-05: #eef1f6;
+  --text-inverted: #0f1115;
+
+  --border-01: #262b36;
+  --border-02: #313747;
+  --border-03: #3d4456;
+
+  --accent-05: #4f8cff;
+  --accent-06: #6ba1ff;
+  --accent-soft: #1c2940;
+
+  --danger-05: #ff6b6b;
+  --success-05: #57d68a;
+  --warning-05: #ffcc66;
+}
+
+html, body {
+  padding: 0;
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", sans-serif;
-  line-height: 1.6;
+  height: 100%;
+}
+body {
+  background: var(--background-00);
+  color: var(--text-05);
 }
 
-a { color: var(--accent); text-decoration: none; }
+/* 细滚动条 */
+* { scrollbar-width: thin; scrollbar-color: var(--border-02) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--border-02); border-radius: 4px; }
 
-.nav {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
-}
-.nav .brand { font-weight: 700; margin-right: 16px; }
-.nav a { color: var(--muted); }
-.nav a:hover { color: var(--text); }
+/* markdown 基础排版 */
+.prose-chat p { margin: 0.4em 0; }
+.prose-chat ul, .prose-chat ol { margin: 0.4em 0; padding-left: 1.3em; }
+.prose-chat code { background: var(--background-02); padding: 1px 5px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+.prose-chat pre { background: var(--background-02); padding: 12px; border-radius: 8px; overflow-x: auto; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { margin: 0.6em 0 0.3em; font-weight: 600; }
+.prose-chat a { color: var(--accent-05); }
 
-.container { max-width: 920px; margin: 0 auto; padding: 24px; }
-
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-button {
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 16px;
-  font-size: 14px;
-  cursor: pointer;
-}
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-button.secondary { background: var(--accent-soft); color: var(--text); }
-
-input, textarea, select {
-  background: #0c0e13;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 12px;
-  font-size: 14px;
-  width: 100%;
-}
-
-.row { display: flex; gap: 10px; align-items: center; }
-.muted { color: var(--muted); font-size: 13px; }
-
-.bubble { padding: 12px 14px; border-radius: 12px; margin: 10px 0; white-space: pre-wrap; }
-.bubble.user { background: var(--accent-soft); }
-.bubble.assistant { background: #12151c; border: 1px solid var(--border); }
-
-.citation {
-  border-left: 3px solid var(--accent);
-  background: #0c0e13;
-  padding: 8px 12px;
-  margin: 6px 0;
-  border-radius: 0 8px 8px 0;
-  font-size: 13px;
-}
-.badge {
-  display: inline-block;
-  background: var(--accent-soft);
-  color: var(--text);
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  margin-right: 6px;
-}
-.tag { font-size: 11px; padding: 2px 8px; border:1px solid var(--border); border-radius:999px; color: var(--muted); margin-right:6px;}
-.status-success { color: #57d68a; }
-.status-failed { color: #ff6b6b; }
-.status-running, .status-pending { color: #ffcc66; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.animate-in { animation: fadeInUp 0.2s ease-out; }

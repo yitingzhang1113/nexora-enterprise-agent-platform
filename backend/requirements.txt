@@ -8,22 +8,24 @@ sse-starlette==2.1.3
 pydantic==2.10.4
 pydantic-settings==2.7.1
 
-# --- DB ---
+# --- DB (仅元数据; chunk 在 OpenSearch) ---
 sqlalchemy==2.0.36
 alembic==1.14.0
 psycopg[binary]==3.2.3
-pgvector==0.3.6
+
+# --- Vector / search backend ---
+opensearch-py==2.8.0
+
+# --- LLM (统一多 provider) ---
+litellm==1.61.20
 
 # --- Background jobs ---
 celery==5.4.0
 redis==5.2.1
 
-# --- HTTP client (Ollama / web connector) ---
+# --- HTTP client (model_server / connectors) ---
 httpx==0.28.1
 
 # --- Document parsing ---
 pypdf==5.1.0
 beautifulsoup4==4.12.3
-
-# --- LLM providers (optional) ---
-anthropic==0.42.0
