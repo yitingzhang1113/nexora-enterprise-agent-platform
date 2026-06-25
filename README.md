@@ -53,6 +53,17 @@ docker compose run --rm backend python -m seed.seed
 4. 在「文档」页上传你自己的 PDF/MD，或抓取一个网页，看索引任务状态变为 `success`。
 5. 在 http://localhost:8000/docs 直接调 `POST /search` 体验混合检索的 `vector_rank` / `keyword_rank`。
 
+## 本地实测说明 & 已知点
+
+已在 macOS (Docker Desktop, 分配 7.7GB 内存) 完整跑通：上传/索引、混合检索、流式 RAG 问答(带引用)、Agent 工具调用。两点经验：
+
+- **模型与内存**：llama3.1 (8B) 权重约 5GB，在 ~8GB 的 Docker 内存下会被 OOM 杀掉
+  (`llama-server ... signal: killed`)。因此默认生成模型改为 **qwen2.5:3b**(中文强、~2GB)。
+  Docker 内存 ≥12GB 时可在 `.env` 把 `GEN_MODEL` 换回 `llama3.1`。
+- **中文关键词检索**：Postgres `simple` 分词器不切中文词，所以纯中文查询时「关键词」一路
+  基本不命中(`keyword_rank=None`)，**向量检索**承担主要召回。要让中文 BM25 生效需装中文分词
+  扩展 (如 `zhparser` / `pg_jieba`) —— 这是 §进阶方向之一。英文/术语/数字的关键词检索正常。
+
 ## 切换到 Claude
 
 `.env` 里设置：

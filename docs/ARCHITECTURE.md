@@ -75,6 +75,10 @@ Onyx 用 Vespa 是因为要支撑**大规模**文档、**复杂排序信号** (B
 为什么要混合？向量擅长语义近似 (同义改写)，关键词擅长精确术语 (药名、剂量数字)。
 医药场景两者都重要 —— 这也是企业搜索普遍采用混合检索的原因。
 
+> **中文 FTS 注意**：Postgres `simple` 分词器按空格/标点切词，不切中文，
+> 故纯中文查询时关键词一路常常不命中 (`keyword_rank=None`)，向量路承担主要召回。
+> 生产中文场景应安装中文分词扩展 (`zhparser` / `pg_jieba`) 再建 tsvector。
+
 ## 5. LLM provider 抽象
 
 `app/llm/base.py` 定义最小接口 (`stream_chat` / `chat` / `chat_with_tools`)。

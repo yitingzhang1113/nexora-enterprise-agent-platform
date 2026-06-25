@@ -95,11 +95,16 @@ def chat(req: ChatRequest, db: Session = Depends(get_db)):
     context, citations = format_context(hits)
     messages = build_rag_messages(req.message, context, history)
 
+    # 关键: 在进入生成器前把需要的值取成普通变量。
+    # 因为 SSE 生成器在请求级 DB session 关闭后才执行, 此时 ORM 实例已 detached,
+    # 再访问 session.id 会触发 DetachedInstanceError。
+    sid = session.id
+
     def event_stream():
         yield {
             "event": "meta",
             "data": json.dumps(
-                {"session_id": session.id, "citations": citations}, ensure_ascii=False
+                {"session_id": sid, "citations": citations}, ensure_ascii=False
             ),
         }
         llm = get_llm()
@@ -114,7 +119,7 @@ def chat(req: ChatRequest, db: Session = Depends(get_db)):
         try:
             persist_db.add(
                 ChatMessage(
-                    session_id=session.id,
+                    session_id=sid,
                     role="assistant",
                     content=answer,
                     citations=citations,
