@@ -1,0 +1,103 @@
+# 本地开发一键起：postgres(pgvector) + redis + ollama + backend + worker + frontend
+# 用法:
+#   cp .env.example .env
+#   docker compose up -d
+#   docker compose run --rm backend python -m seed.seed   # 写入医药种子数据
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nexora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexora}
+      POSTGRES_DB: ${POSTGRES_DB:-nexora}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexora}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    # 若有 GPU 可解开以下配置
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{capabilities: [gpu]}]
+
+  # 一次性拉取所需模型 (生成 + 嵌入)，完成后退出
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "sleep 3 &&
+       ollama pull ${GEN_MODEL:-llama3.1} &&
+       ollama pull ${EMBED_MODEL:-bge-m3} &&
+       echo 'models pulled'"
+    restart: "no"
+
+  backend:
+    build: ./backend
+    command: ["bash", "entrypoint.sh"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nexora}:${POSTGRES_PASSWORD:-nexora}@postgres:5432/${POSTGRES_DB:-nexora}
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_started
+
+  worker:
+    build: ./backend
+    command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nexora}:${POSTGRES_PASSWORD:-nexora}@postgres:5432/${POSTGRES_DB:-nexora}
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: http://ollama:11434
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      backend:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  ollama:
+  uploads:
