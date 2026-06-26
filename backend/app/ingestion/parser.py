@@ -37,8 +37,15 @@ def parse_file(path: str, title: str | None = None) -> RawDoc:
     )
 
 
+_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124 Safari/537.36"
+)
+
+
 def parse_url(url: str) -> RawDoc:
-    resp = httpx.get(url, timeout=30, follow_redirects=True)
+    # 带浏览器 UA, 否则不少站点对默认 httpx UA 返回 403
+    resp = httpx.get(url, timeout=30, follow_redirects=True, headers={"User-Agent": _UA})
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
     for tag in soup(["script", "style", "noscript"]):
