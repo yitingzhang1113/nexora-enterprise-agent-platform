@@ -18,21 +18,90 @@ FastAPI, LangGraph, LangChain, MCP tools, Milvus, Redis, Postgres, Slack integra
 Agent 自动规划并**并行调用工具**,校验结果,对高风险操作(退款 > $200、暂停广告)**挂起人工审批**,
 通过后才执行并通知运营组。
 
-## 架构 (Architecture)
+## 项目架构 (Architecture)
+
+### 系统拓扑 (System topology)
 
 ```
-React Chat / Admin
-      ↓
-FastAPI API Gateway  (SSE 流式 / Auth / Redis 限流)
-      ↓
-LangGraph Agent Workflow (10 节点):
-  load_memory → rewrite_query → classify_intent → plan_tasks → route
-    → parallel_tool_calls (asyncio.gather)
-    → validate_result (风险标记)
-    → human_approval_if_needed (高风险→审批队列)
-    → execute_action (建工单/发 Slack)
-    → final_response (LLM 汇总, 带引用)
-    → save_trace (Langfuse) + save_memory (Redis/Postgres)
+┌──────────────────────────────────────────────────────────────────────┐
+│  浏览器 (Next.js 15)                                                    │
+│  Chat (SSE 流式 + 节点时间线 + 引用) │ Admin (看板/审批/工具/Trace...)    │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                 │  HTTP / SSE  (/api/*)
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  FastAPI API Gateway   (CORS · Redis 限流 · SSE · 鉴权占位)             │
+│  routers: chat · knowledge · admin · approvals · ops · tools · slack · data│
+└───────────────────────────────┬──────────────────────────────────────┘
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  LangGraph Agent Workflow  (app/graph)                                  │
+│  load_memory→rewrite→classify_intent→plan_tasks→route                   │
+│    →parallel_tool_calls(asyncio.gather)→validate_result                 │
+│    →human_approval_if_needed→execute_action→final_response              │
+│    →save_trace + save_memory                                            │
+└──┬───────────┬───────────┬────────────┬───────────┬───────────┬────────┘
+   │           │           │            │           │           │
+   ▼           ▼           ▼            ▼           ▼           ▼
+ LLM Router  RAG 检索    MCP 工具(10)   Memory     Observ.     Cache
+ (LangChain) (多路融合)  (查 Postgres)  (Redis+PG) (Langfuse)  (Redis)
+   │           │           │            │           │
+   ▼           ▼           ▼            ▼           ▼
+ Ollama     Milvus(dense) Postgres    Postgres    Langfuse
+ qwen2.5:3b + BM25/jieba  业务表       会话/摘要    节点级 trace
+ (+model_server bge-m3 嵌入) RRF 融合
+                                  ▲
+                     Celery worker (异步入库: 文件/网页 → 切块→嵌入→Milvus+PG)
+```
+
+### Agent 工作流 (10 节点)
+
+```
+load_memory → rewrite_query → classify_intent → plan_tasks → route
+  ├ clarification → clarify (反问)
+  └ 其余 → parallel_tool_calls (asyncio.gather 并行工具)
+           → validate_result (退货率/库存/销量 风险标记)
+           → human_approval_if_needed (退款>$200/暂停广告 → 审批队列, 暂停)
+           → execute_action (无需审批的: 建工单/发 Slack)
+           → final_response (LLM 汇总, 带 [n] 引用)
+  → save_trace (Langfuse) + save_memory (Redis/Postgres)
+```
+
+### 后端结构 (backend/app)
+
+```
+app/
+├── main.py              # FastAPI 装配, /api 前缀
+├── api/                 # chat · knowledge · admin · approvals · ops · tools · slack · data · auth · health
+├── graph/               # LangGraph: state · nodes · router · workflow
+├── rag/                 # chunker · embedder(缓存) · retrievers(Milvus+BM25) · multi_retriever(RRF) · reranker · prompt_builder
+├── intent/              # classifier · intent_tree(规则) · clarification
+├── models/              # providers(LangChain) · llm_router · circuit_breaker · health_check
+├── tools/               # mcp_client · registry · data/policy/action/refund_tools (10 个工具)
+├── memory/              # short_term(Redis) · summarizer · store(Postgres)
+├── ingestion/           # parser · cleaner · splitter · embedder · indexer  (+ import_uci 真实数据)
+├── observability/       # langfuse · tracing · metrics
+├── db/                  # engine · models · redis · milvus
+├── tasks/               # celery_app · ingestion_tasks
+├── cache.py             # Redis 读穿缓存 (嵌入/检索)
+└── seed/                # 合成数据 + 政策知识库 + import_uci
+backend/model_server/    # 独立嵌入服务 (代理 Ollama bge-m3)
+```
+
+### 前端结构 (frontend/src)
+
+```
+app/
+├── page.tsx             # 聊天 (流式 + 节点时间线 + 引用 + 审批气泡)
+└── admin/               # dashboard(Recharts看板) · documents · data · tools · ops · approvals · slack · agents · traces · status
+components/  sidebar · chat · admin · ui   ·   lib/  api.ts(SSE 解析) · store.ts(Zustand)
+```
+
+### 部署拓扑 (docker-compose / K8s)
+
+```
+postgres(pgvector) · redis · milvus(+etcd+minio) · ollama · model_server · langfuse
+backend(API) · worker(Celery) · frontend(Next.js)
 ```
 
 ## 技术栈
