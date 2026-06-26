@@ -2,8 +2,8 @@
 
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
-import useSWR from "swr";
-import { chatStream, listPersonas, Persona } from "@/lib/api";
+import useSWR, { useSWRConfig } from "swr";
+import { chatStream, getSessionMessages, listPersonas, Persona } from "@/lib/api";
 import { useUI } from "@/lib/store";
 import { ChatMsg, Message } from "./Message";
 import { SourcesPanel } from "./SourcesPanel";
@@ -17,15 +17,35 @@ export function ChatMain() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
+  const { mutate } = useSWRConfig();
 
   useEffect(() => setMessages([]), [newChatNonce]);
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
+
+  // 点击左侧历史会话 → 加载该会话的历史消息 (发送过程中不覆盖)
+  useEffect(() => {
+    if (!sessionId || sendingRef.current) return;
+    getSessionMessages(sessionId)
+      .then((rows) =>
+        setMessages(
+          rows.map((r) => ({
+            role: r.role === "assistant" ? "assistant" : "user",
+            content: r.content,
+            citations: r.citations,
+          }))
+        )
+      )
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   async function send() {
     const text = input.trim();
     if (!text || busy) return;
     setInput("");
     setBusy(true);
+    sendingRef.current = true;
     setMessages((m) => [...m, { role: "user", content: text }]);
     setMessages((m) => [
       ...m,
@@ -64,7 +84,9 @@ export function ChatMain() {
       });
     } finally {
       setBusy(false);
+      sendingRef.current = false;
       patch((m) => (m.streaming = false));
+      mutate("sessions"); // 刷新左侧历史列表
     }
   }
 

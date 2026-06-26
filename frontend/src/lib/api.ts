@@ -79,6 +79,10 @@ export const listPersonas = () => getJSON<Persona[]>("/admin/personas");
 export const listDocuments = () => getJSON<DocumentItem[]>("/knowledge/documents");
 export const listAttempts = () => getJSON<IndexAttempt[]>("/knowledge/index-attempts");
 export const listSessions = () => getJSON<ChatSession[]>("/chat-sessions");
+export const getSessionMessages = (id: number) =>
+  getJSON<{ role: string; content: string; citations: Citation[]; meta: any }[]>(
+    `/chat-sessions/${id}/messages`
+  );
 export const getStatus = () => getJSON<any>("/admin/status");
 export const listTraces = () => getJSON<any[]>("/admin/traces");
 export const listApprovals = () => getJSON<ApprovalItem[]>("/approvals");

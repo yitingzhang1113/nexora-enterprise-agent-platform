@@ -9,7 +9,7 @@ import {
   Sidebar as SidebarIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { cn } from "@/lib/cn";
 import { listPersonas, listSessions, Persona, ChatSession } from "@/lib/api";
@@ -20,6 +20,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 export function AppSidebar() {
   const { sidebarOpen, toggleSidebar, personaId, setPersona, setSession, newChat } = useUI();
   const pathname = usePathname();
+  const router = useRouter();
   const { data: personas } = useSWR<Persona[]>("personas", listPersonas);
   const { data: sessions } = useSWR<ChatSession[]>("sessions", listSessions);
 
@@ -69,6 +70,8 @@ export function AppSidebar() {
             onClick={() => {
               setPersona(p.id);
               setSession(undefined);
+              newChat();
+              router.push("/");
             }}
             className={cn(
               "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm",
@@ -87,7 +90,10 @@ export function AppSidebar() {
         {(sessions || []).map((s) => (
           <button
             key={s.id}
-            onClick={() => setSession(s.id)}
+            onClick={() => {
+              setSession(s.id);
+              router.push("/");
+            }}
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-text-3 hover:bg-bg-2"
           >
             <span className="truncate">{s.title || `会话 #${s.id}`}</span>
@@ -99,7 +105,7 @@ export function AppSidebar() {
       {/* 底部 */}
       <div className="border-t border-border px-2 py-2">
         <Link
-          href="/admin/connectors"
+          href="/admin/documents"
           className={cn(
             "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm",
             pathname.startsWith("/admin")
