@@ -90,6 +90,7 @@ export const listOpsTickets = () => getJSON<any[]>("/ops/tickets");
 export const listToolsRegistry = () => getJSON<any[]>("/tools");
 export const listSlack = () => getJSON<any[]>("/slack/messages");
 export const getDataOverview = () => getJSON<any>("/data/overview");
+export const getDashboard = () => getJSON<any>("/data/dashboard");
 
 export async function approveApproval(id: number) {
   const r = await fetch(`${API_BASE}/approvals/${id}/approve`, { method: "POST" });

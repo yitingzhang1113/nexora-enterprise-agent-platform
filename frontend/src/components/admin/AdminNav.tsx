@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChartBar,
   ChartLine,
   ChatCircleDots,
   Database,
@@ -16,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
 const items = [
+  { href: "/admin/dashboard", label: "运营看板", icon: ChartBar },
   { href: "/admin/documents", label: "知识库", icon: FileText },
   { href: "/admin/data", label: "业务数据", icon: Database },
   { href: "/admin/tools", label: "工具注册表", icon: Wrench },
