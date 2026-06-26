@@ -7,8 +7,9 @@ resources:
   - 10-postgres.yaml
   - 11-redis.yaml
   - 12-ollama.yaml
-  - 13-opensearch.yaml
+  - 13-milvus.yaml
   - 14-model-server.yaml
+  - 15-langfuse.yaml
   - 20-backend.yaml
   - 21-worker.yaml
   - 22-frontend.yaml

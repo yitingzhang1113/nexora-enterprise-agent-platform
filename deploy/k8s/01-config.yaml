@@ -1,4 +1,4 @@
-# 非敏感配置 (ConfigMap) + 敏感配置 (Secret) —— v2
+# 非敏感配置 (ConfigMap) + 敏感配置 (Secret) —— v3
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,16 +6,24 @@ metadata:
   namespace: nexora
 data:
   REDIS_URL: "redis://redis:6379/0"
-  OPENSEARCH_URL: "http://opensearch:9200"
-  OPENSEARCH_INDEX: "nexora_chunks"
+  MILVUS_URI: "http://milvus:19530"
+  MILVUS_COLLECTION: "nexora_chunks"
   MODEL_SERVER_URL: "http://model-server:9000"
   OLLAMA_BASE_URL: "http://ollama:11434"
   EMBED_MODEL: "bge-m3"
   EMBED_DIM: "1024"
-  LLM_MODEL: "ollama/qwen2.5:3b"
+  LLM_PROVIDER: "ollama"
+  LLM_MODEL_MAIN: "qwen2.5:3b"
+  LLM_MODEL_FAST: "qwen2.5:3b"
   TOP_K: "5"
-  CHUNK_SIZE: "1000"
-  CHUNK_OVERLAP: "150"
+  RETRIEVE_POOL: "20"
+  CHUNK_SIZE: "800"
+  CHUNK_OVERLAP: "120"
+  RERANK_MODE: "llm"
+  MCP_SERVER_URL: ""
+  LANGFUSE_HOST: "http://langfuse:3000"
+  LANGFUSE_PUBLIC_KEY: "pk-lf-nexora"
+  LANGFUSE_SECRET_KEY: "sk-lf-nexora"
   UPLOAD_DIR: "/app/uploads"
   CORS_ORIGINS: "http://localhost:3000,http://nexora.local"
 ---

@@ -6,16 +6,16 @@ import { createPersona, listPersonas, Persona } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Card, Input, PageTitle, Textarea } from "@/components/admin/ui";
 
-const ALL_TOOLS = ["search_docs", "calculator"];
+const ALL_TOOLS = ["get_weather", "query_ticket", "query_sales"];
 
 export default function AgentsPage() {
   const { data: personas, mutate } = useSWR<Persona[]>("personas", listPersonas);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [prompt, setPrompt] = useState(
-    "你是一个严谨的医药知识助手，依据参考资料作答并标注引用 [n]。"
+    "你是一个严谨的企业知识助手，依据参考资料作答并标注引用 [n]。"
   );
-  const [tools, setTools] = useState<string[]>(["search_docs"]);
+  const [tools, setTools] = useState<string[]>(["get_weather"]);
   const [busy, setBusy] = useState(false);
 
   async function create() {

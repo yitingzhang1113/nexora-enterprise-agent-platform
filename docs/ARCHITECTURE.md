@@ -1,4 +1,15 @@
-# 架构讲解 (Onyx ↔ Nexora)
+# 架构讲解
+
+> **v3 更新 (当前)**:已转向「Python 版 Ragent AI」—— 后端核心是 **LangGraph Agent 工作流**
+> (`backend/app/graph`),技术栈 FastAPI + LangGraph + LangChain + Milvus + MCP + Langfuse,领域改为**通用**。
+> 流程:`load_memory → rewrite_query → classify_intent → route(知识RAG / MCP工具 / 澄清) → rerank → build_prompt → generate → save_trace+save_memory`。
+> 检索 = Milvus dense + BM25(jieba) RRF;LLM 走 LangChain(llm_router 选模型 + 熔断);
+> 可观测 = Langfuse 节点级 trace。后端目录:`api/graph/rag/intent/models/tools/memory/ingestion/observability/db`。
+> 下方 v1/v2 内容作为演进对照保留(原理相通:写入侧索引、读取侧检索+生成的骨架不变)。
+
+---
+
+# (历史) 架构讲解 (Onyx ↔ Nexora)
 
 > **v2 更新**：为更贴近真实 Onyx，已做以下重构(本文下方部分小节仍以 v1 视角描述原理，但实际实现以此处为准)：
 > - 后端包从 `app/` 重排为 **`nexora/`** 模块布局，业务路由统一挂 **`/api`** 前缀(对齐 `onyx/server`)。

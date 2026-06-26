@@ -1,16 +1,11 @@
-"""独立 model server (对应 onyx/model_server)。
-
-Onyx 把嵌入推理放在单独的服务里, 索引/检索通过 HTTP 调它。
-我们复刻这个边界: 默认实现代理本地 Ollama 的 bge-m3 (复用已拉模型, 省内存)。
-将来要换 sentence-transformers / HF 自托管, 只改这一个服务。
-"""
+"""独立 model server (嵌入)。默认代理本地 Ollama 的 bge-m3。"""
 from __future__ import annotations
 
 import httpx
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from nexora.configs.app_configs import settings
+from app.config import settings
 
 app = FastAPI(title="Nexora model_server (embeddings)")
 

@@ -7,8 +7,8 @@ const sans = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
 const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Nexora —— 医药 Agent / RAG 平台",
-  description: "仿 Onyx 的企业级 Agent 平台 (OpenSearch + LiteLLM)",
+  title: "Nexora —— 企业级 Agent 平台 (Ragent AI)",
+  description: "LangGraph + LangChain + Milvus + MCP + Langfuse",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

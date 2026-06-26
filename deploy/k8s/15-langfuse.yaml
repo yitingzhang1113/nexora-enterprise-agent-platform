@@ -1,0 +1,41 @@
+# Langfuse (可观测). 复用 postgres 的 langfuse 库 (需先建库, 见 migrate Job 说明)。
+apiVersion: v1
+kind: Service
+metadata:
+  name: langfuse
+  namespace: nexora
+spec:
+  selector: { app: langfuse }
+  ports: [{ port: 3000, targetPort: 3000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langfuse
+  namespace: nexora
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: langfuse } }
+  template:
+    metadata: { labels: { app: langfuse } }
+    spec:
+      containers:
+        - name: langfuse
+          image: langfuse/langfuse:2
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://nexora:nexora@postgres:5432/langfuse"
+            - { name: NEXTAUTH_URL, value: "http://nexora.local/langfuse" }
+            - { name: NEXTAUTH_SECRET, value: "nexora-nextauth-secret" }
+            - { name: SALT, value: "nexora-salt" }
+            - { name: TELEMETRY_ENABLED, value: "false" }
+            - { name: LANGFUSE_INIT_ORG_ID, value: "nexora" }
+            - { name: LANGFUSE_INIT_PROJECT_ID, value: "nexora" }
+            - { name: LANGFUSE_INIT_PROJECT_PUBLIC_KEY, value: "pk-lf-nexora" }
+            - { name: LANGFUSE_INIT_PROJECT_SECRET_KEY, value: "sk-lf-nexora" }
+            - { name: LANGFUSE_INIT_USER_EMAIL, value: "admin@nexora.local" }
+            - { name: LANGFUSE_INIT_USER_PASSWORD, value: "nexora123" }
+          ports: [{ containerPort: 3000 }]
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "1Gi" }

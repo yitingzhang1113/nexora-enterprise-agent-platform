@@ -1,15 +1,15 @@
 "use client";
 
-import { Database, FileText, Gear, Robot } from "@phosphor-icons/react";
+import { ChartLine, FileText, Pulse, Robot } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
 const items = [
-  { href: "/admin/connectors", label: "连接器", icon: Database },
-  { href: "/admin/documents", label: "文档", icon: FileText },
+  { href: "/admin/documents", label: "知识库", icon: FileText },
   { href: "/admin/agents", label: "助手", icon: Robot },
-  { href: "/admin/configuration", label: "配置", icon: Gear },
+  { href: "/admin/traces", label: "Trace", icon: Pulse },
+  { href: "/admin/status", label: "系统状态", icon: ChartLine },
 ];
 
 export function AdminNav() {

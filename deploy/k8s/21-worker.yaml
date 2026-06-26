@@ -18,7 +18,7 @@ spec:
         - name: worker
           image: nexora/backend:latest
           imagePullPolicy: IfNotPresent
-          command: ["celery", "-A", "nexora.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+          command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
           envFrom:
             - configMapRef: { name: nexora-config }
             - secretRef: { name: nexora-secret }

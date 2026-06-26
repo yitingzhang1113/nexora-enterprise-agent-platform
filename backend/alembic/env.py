@@ -1,14 +1,13 @@
-"""Alembic 环境 (v2): 用 nexora 的 Base.metadata 与 settings.database_url。"""
+"""Alembic 环境 (v3): app.db.Base + settings.database_url。"""
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from nexora.configs.app_configs import settings
-from nexora.db.engine import Base
+from app.config import settings
+from app.db.engine import Base
 
-# import 模型让其注册到 Base.metadata
-import nexora.db.models  # noqa: F401
+import app.db.models  # noqa: F401  注册模型
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
@@ -17,17 +16,6 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
-
-
-def run_migrations_offline() -> None:
-    context.configure(
-        url=settings.database_url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-    with context.begin_transaction():
-        context.run_migrations()
 
 
 def run_migrations_online() -> None:
@@ -40,6 +28,14 @@ def run_migrations_online() -> None:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
+
+
+def run_migrations_offline() -> None:
+    context.configure(
+        url=settings.database_url, target_metadata=target_metadata, literal_binds=True
+    )
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 if context.is_offline_mode():

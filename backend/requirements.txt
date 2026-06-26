@@ -8,22 +8,34 @@ sse-starlette==2.1.3
 pydantic==2.10.4
 pydantic-settings==2.7.1
 
-# --- DB (仅元数据; chunk 在 OpenSearch) ---
+# --- DB (元数据 + chunk 文本; 向量在 Milvus) ---
 sqlalchemy==2.0.36
 alembic==1.14.0
 psycopg[binary]==3.2.3
 
-# --- Vector / search backend ---
-opensearch-py==2.8.0
+# --- Vector DB ---
+pymilvus==2.5.4
 
-# --- LLM (统一多 provider) ---
-litellm==1.61.20
+# --- LangGraph / LangChain ---
+langgraph==0.2.61
+langchain-core==0.3.29
+langchain-community==0.3.14
+langchain-ollama==0.2.2
+langchain-anthropic==0.3.1
+langchain-openai==0.2.14
+
+# --- Keyword retrieval (中文友好) ---
+rank-bm25==0.2.2
+jieba==0.42.1
+
+# --- Observability ---
+langfuse==2.57.0
 
 # --- Background jobs ---
 celery==5.4.0
 redis==5.2.1
 
-# --- HTTP client (model_server / connectors) ---
+# --- HTTP client (model_server / connectors / mcp) ---
 httpx==0.28.1
 
 # --- Document parsing ---

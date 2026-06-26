@@ -21,7 +21,7 @@ spec:
             - |
               set -e
               alembic upgrade head
-              python -m seed.seed
+              python -m app.seed.seed
           envFrom:
             - configMapRef: { name: nexora-config }
             - secretRef: { name: nexora-secret }

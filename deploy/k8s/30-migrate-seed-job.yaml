@@ -1,4 +1,4 @@
-# 一次性 Job: Alembic 迁移 + 写入医药种子数据
+# 一次性 Job: 建 langfuse 库 + Alembic 迁移 + 写入通用种子数据
 # 学习点: 用 Job 做「一次性运维动作」, 与长期运行的 Deployment 分离。
 apiVersion: batch/v1
 kind: Job
@@ -19,10 +19,21 @@ spec:
             - -c
             - |
               set -e
+              echo "ensuring langfuse db..."
+              python - <<'PY'
+              import psycopg
+              from app.config import settings
+              base = settings.database_url.replace("+psycopg", "")
+              with psycopg.connect(base, autocommit=True) as c:
+                  exists = c.execute("SELECT 1 FROM pg_database WHERE datname='langfuse'").fetchone()
+                  if not exists:
+                      c.execute("CREATE DATABASE langfuse")
+                      print("created langfuse db")
+              PY
               echo "running migrations..."
               alembic upgrade head
-              echo "seeding pharma data..."
-              python -m seed.seed
+              echo "seeding general data..."
+              python -m app.seed.seed
           envFrom:
             - configMapRef: { name: nexora-config }
             - secretRef: { name: nexora-secret }

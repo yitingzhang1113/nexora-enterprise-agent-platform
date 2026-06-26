@@ -2,9 +2,9 @@
 
 import {
   ChatCircleDots,
+  Cube,
   Gear,
   NotePencil,
-  Pill,
   Robot,
   Sidebar as SidebarIcon,
 } from "@phosphor-icons/react";
@@ -41,7 +41,7 @@ export function AppSidebar() {
       {/* 头部 */}
       <div className="flex items-center justify-between px-3 py-3">
         <Link href="/" className="flex items-center gap-2 font-semibold text-text-5">
-          <Pill size={20} weight="fill" className="text-accent" /> Nexora
+          <Cube size={20} weight="fill" className="text-accent" /> Nexora
         </Link>
         <IconButton onClick={toggleSidebar} aria-label="收起侧栏">
           <SidebarIcon size={18} />
@@ -75,7 +75,7 @@ export function AppSidebar() {
               personaId === p.id ? "bg-accent-soft text-text-5" : "text-text-3 hover:bg-bg-2"
             )}
           >
-            <Pill size={15} /> <span className="truncate">{p.name}</span>
+            <Robot size={15} /> <span className="truncate">{p.name}</span>
           </button>
         ))}
         {!personas?.length && <Empty text="暂无助手" />}
