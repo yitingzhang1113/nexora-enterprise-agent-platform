@@ -1,6 +1,15 @@
 # 架构讲解
 
-> **v3 更新 (当前)**:已转向「Python 版 Ragent AI」—— 后端核心是 **LangGraph Agent 工作流**
+> **v4 更新 (当前) —— Nexora Ops Agent (电商运营)**:在 v3 LangGraph 基础上落到电商运营场景。
+> 工作流扩展为 10 节点:`load_memory → rewrite_query → classify_intent → plan_tasks → route
+> → parallel_tool_calls(asyncio.gather) → validate_result → human_approval_if_needed → execute_action
+> → final_response → save_trace + save_memory`。新增:电商业务表(orders/returns/inventory/...)、
+> 10 个 MCP 工具(真实查 Postgres)、**异步人工审批队列**(高风险动作)、**Redis 嵌入缓存**(重复检索 ~134×)、
+> Slack mock 通知。详见 README 与 `backend/app/{graph,tools,api}`。
+>
+> ---
+
+> **v3 更新**:已转向「Python 版 Ragent AI」—— 后端核心是 **LangGraph Agent 工作流**
 > (`backend/app/graph`),技术栈 FastAPI + LangGraph + LangChain + Milvus + MCP + Langfuse,领域改为**通用**。
 > 流程:`load_memory → rewrite_query → classify_intent → route(知识RAG / MCP工具 / 澄清) → rerank → build_prompt → generate → save_trace+save_memory`。
 > 检索 = Milvus dense + BM25(jieba) RRF;LLM 走 LangChain(llm_router 选模型 + 熔断);

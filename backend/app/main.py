@@ -7,7 +7,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import admin, auth, chat, health, knowledge
+from app.api import (
+    admin,
+    approvals,
+    auth,
+    chat,
+    data,
+    health,
+    knowledge,
+    ops,
+    slack,
+    tools,
+)
 from app.config import settings
 
 
@@ -28,7 +39,10 @@ def get_application() -> FastAPI:
     app.include_router(health.router)  # 根路径
 
     prefix = settings.app_api_prefix.rstrip("/")
-    for r in (auth.router, chat.router, knowledge.router, admin.router):
+    for r in (
+        auth.router, chat.router, knowledge.router, admin.router,
+        ops.router, approvals.router, tools.router, slack.router, data.router,
+    ):
         app.include_router(r, prefix=prefix)
 
     @app.get("/")

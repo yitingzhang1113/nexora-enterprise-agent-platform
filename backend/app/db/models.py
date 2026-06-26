@@ -9,8 +9,10 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -157,3 +159,128 @@ class Trace(Base):
     steps: Mapped[list] = mapped_column(JSONB, default=list)  # [{node, ms, info}]
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = _now()
+
+
+# ========================= 电商业务表 (v4) =========================
+class Product(Base):
+    __tablename__ = "products"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sku: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    category: Mapped[str] = mapped_column(String(64), default="")
+    price: Mapped[float] = mapped_column(Float, default=0.0)
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    created_at: Mapped[datetime] = _now()
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), default="")
+    tier: Mapped[str] = mapped_column(String(32), default="standard")
+    created_at: Mapped[datetime] = _now()
+
+
+class Order(Base):
+    __tablename__ = "orders"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    customer_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="paid")
+    total: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(Integer, index=True)
+    product_id: Mapped[int] = mapped_column(Integer, index=True)
+    sku: Mapped[str] = mapped_column(String(64), index=True)
+    qty: Mapped[int] = mapped_column(Integer, default=1)
+    price: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+class Inventory(Base):
+    __tablename__ = "inventory"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sku: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+    safety_stock: Mapped[int] = mapped_column(Integer, default=30)
+
+
+class Return(Base):
+    __tablename__ = "returns"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(Integer, index=True)
+    sku: Mapped[str] = mapped_column(String(64), index=True)
+    reason: Mapped[str] = mapped_column(String(255), default="")
+    amount: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sku: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    subject: Mapped[str] = mapped_column(String(255), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="open")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class Campaign(Base):
+    __tablename__ = "campaigns"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    sku: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    channel: Mapped[str] = mapped_column(String(32), default="search")
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    daily_budget: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+class RefundRequest(Base):
+    __tablename__ = "refund_requests"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(Integer, index=True)
+    amount: Mapped[float] = mapped_column(Float, default=0.0)
+    reason: Mapped[str] = mapped_column(String(255), default="")
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    created_at: Mapped[datetime] = _now()
+
+
+class OpsTicket(Base):
+    __tablename__ = "ops_tickets"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(255))
+    sku: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    severity: Mapped[str] = mapped_column(String(32), default="medium")
+    status: Mapped[str] = mapped_column(String(32), default="open")
+    body: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = _now()
+
+
+class SlackMessage(Base):
+    __tablename__ = "slack_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    channel: Mapped[str] = mapped_column(String(64), default="#ops-alerts")
+    text: Mapped[str] = mapped_column(Text)
+    sent_real: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = _now()
+
+
+class Approval(Base):
+    """人工审批队列。需审批的动作先入队 (pending), 审批通过后执行。"""
+
+    __tablename__ = "approvals"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    trace_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    action_type: Mapped[str] = mapped_column(String(64))  # refund / pause_campaign / create_ticket
+    title: Mapped[str] = mapped_column(String(255), default="")
+    payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+    status: Mapped[str] = mapped_column(String(32), default="pending")  # pending/approved/rejected/executed
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    result: Mapped[dict] = mapped_column(JSONB, default=dict)
+    created_at: Mapped[datetime] = _now()
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

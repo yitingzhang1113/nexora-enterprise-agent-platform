@@ -1,0 +1,10 @@
+{"query": "分析最近7天表现异常的商品", "expected_intent": "anomaly_detection"}
+{"query": "NX-AIR-FRYER-001 退货率是多少", "expected_intent": "data_analysis"}
+{"query": "订单 10086 能不能退款", "expected_intent": "refund_decision"}
+{"query": "你好", "expected_intent": "chitchat"}
+{"query": "?", "expected_intent": "clarification"}
+{"query": "退款超过200美元需要审批吗", "expected_doc": "refund_policy.md"}
+{"query": "安全库存是多少", "expected_doc": "inventory_replenishment_sop.md"}
+{"query": "退货率超过多少要暂停广告", "expected_doc": "promotion_policy.md"}
+{"query": "分析 NX-AIR-FRYER-001 异常并建工单", "expected_tool": "query_returns"}
+{"query": "订单 10086 退款 $300", "expected_tool": "evaluate_refund"}

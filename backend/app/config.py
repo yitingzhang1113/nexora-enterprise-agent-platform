@@ -45,6 +45,7 @@ class Settings(BaseSettings):
 
     # --- MCP / tools ---
     mcp_server_url: str = ""  # 配了则走真实 MCP server, 否则用内置 mock
+    slack_webhook_url: str = ""  # 配了则 send_slack_message 真发, 否则 mock 写库
 
     # --- Langfuse ---
     langfuse_host: str = "http://localhost:3001"

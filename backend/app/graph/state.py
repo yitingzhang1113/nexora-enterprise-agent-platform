@@ -1,4 +1,4 @@
-"""LangGraph 状态定义。"""
+"""LangGraph 状态定义 (v4 Ops Agent)。"""
 from __future__ import annotations
 
 from typing import Any, TypedDict
@@ -6,8 +6,8 @@ from typing import Any, TypedDict
 
 class AgentState(TypedDict, total=False):
     session_id: int | None
+    trace_id: str | None
     persona_system: str
-    persona_tools: list[str]
 
     question: str
     history: list[dict[str, str]]
@@ -15,13 +15,22 @@ class AgentState(TypedDict, total=False):
     rewritten_query: str
     intent: str
 
-    retrieved: list[Any]
-    reranked: list[Any]
+    # 实体抽取
+    sku: str | None
+    order_id: int | None
+    amount: float | None
+
+    # 规划与执行
+    plan: list[dict]            # [{tool, args}] 只读工具
+    tool_results: list[dict]    # [{tool, args, result}]
     citations: list[dict]
-    context: str
+    risk: list[str]
+    high_risk: bool
+    auto_actions: list[dict]    # 立即执行的动作
+    executed_actions: list[dict]
+    pending_approvals: list[dict]
+    parallel_ms: int
 
-    tool_results: list[dict]
-
-    gen_messages: list[tuple[str, str]]
     clarification: str | None
+    gen_messages: list[tuple[str, str]]
     answer: str

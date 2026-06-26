@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckCircle, Cube, User, Wrench } from "@phosphor-icons/react";
+import { CheckCircle, Cube, ShieldWarning, User, Wrench } from "@phosphor-icons/react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import type { Citation, NodeStep, ToolStep } from "@/lib/api";
+import type { ApprovalItem, Citation, NodeStep, ToolStep } from "@/lib/api";
 import { useUI } from "@/lib/store";
 
 export interface ChatMsg {
@@ -11,6 +12,7 @@ export interface ChatMsg {
   citations?: Citation[];
   nodes?: NodeStep[];
   tools?: ToolStep[];
+  approvals?: ApprovalItem[];
   streaming?: boolean;
 }
 
@@ -59,9 +61,34 @@ export function Message({ msg }: { msg: ChatMsg }) {
                   <div className="flex items-center gap-1.5">
                     <Wrench size={13} className="text-accent" />
                     <code className="text-text-5">{t.name}</code>
-                    <span className="text-text-2">{JSON.stringify(t.args)}</span>
+                    {t.executed && (
+                      <span className="rounded-full bg-accent-soft px-1.5 text-[10px] text-text-5">已执行</span>
+                    )}
+                    <span className="truncate text-text-2">{JSON.stringify(t.args)}</span>
                   </div>
-                  <div className="mt-1 text-text-4">{t.output}</div>
+                  <div className="mt-1 break-all text-text-4">
+                    {typeof t.result === "string" ? t.result : JSON.stringify(t.result)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 待人工审批 */}
+          {msg.approvals && msg.approvals.length > 0 && (
+            <div className="mb-2 space-y-1">
+              {msg.approvals.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between rounded-md border border-warning bg-bg-1 px-2.5 py-1.5 text-xs"
+                >
+                  <span className="flex items-center gap-1.5 text-text-4">
+                    <ShieldWarning size={13} className="text-warning" />
+                    待审批: {a.title}
+                  </span>
+                  <Link href="/admin/approvals" className="text-accent">
+                    去审批 →
+                  </Link>
                 </div>
               ))}
             </div>

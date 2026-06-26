@@ -51,6 +51,7 @@ export function ChatMain() {
             patch((m) => (m.citations = c));
             setSources(c);
           },
+          onApproval: (a) => patch((m) => (m.approvals = [...(m.approvals || []), a])),
           onToken: (t) => patch((m) => (m.content += t)),
           onClarification: (text) => patch((m) => (m.content = text)),
           onDone: () => patch((m) => (m.streaming = false)),
@@ -71,8 +72,8 @@ export function ChatMain() {
     <div className="flex h-full min-w-0 flex-1">
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border px-5 py-3">
-          <div className="text-sm font-medium text-text-5">{persona?.name || "通用助手"}</div>
-          <div className="text-xs text-text-2">LangGraph Agent · 自动意图路由</div>
+          <div className="text-sm font-medium text-text-5">{persona?.name || "运营助手"}</div>
+          <div className="text-xs text-text-2">Ops Agent · 规划/并行工具/审批</div>
         </header>
 
         <div className="flex-1 overflow-y-auto">
@@ -120,16 +121,16 @@ export function ChatMain() {
 
 function Welcome({ personaName }: { personaName?: string }) {
   const samples = [
-    "Nexora 的年假制度是怎样的？",
-    "什么是 RAG？流程是什么？",
-    "查一下北京的天气",
-    "帮我查 2026Q2 的销售数据",
+    "分析最近 7 天异常商品, 风险高就建工单并通知 Slack",
+    "NX-AIR-FRYER-001 的退货率是多少？原因是什么？",
+    "订单 10086 退款 $300 能退吗？需要审批吗？",
+    "退款超过多少需要经理审批？",
   ];
   return (
     <div className="mx-auto flex h-full max-w-chat flex-col items-center justify-center px-4 text-center">
-      <h1 className="mb-2 text-2xl font-semibold text-text-5">{personaName || "通用助手"}</h1>
+      <h1 className="mb-2 text-2xl font-semibold text-text-5">{personaName || "运营助手"}</h1>
       <p className="mb-6 text-sm text-text-2">
-        企业知识问答 + 业务工具调用, 由 LangGraph 工作流编排, 回答带可溯源引用。
+        电商运营多工具 Agent: 规划 → 并行工具 → 校验 → 审批 → 执行, 由 LangGraph 编排。
       </p>
       <div className="flex flex-wrap justify-center gap-2">
         {samples.map((s) => (

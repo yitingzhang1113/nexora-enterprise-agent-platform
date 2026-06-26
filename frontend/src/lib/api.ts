@@ -55,7 +55,18 @@ export interface NodeStep {
 export interface ToolStep {
   name: string;
   args: Record<string, unknown>;
-  output: string;
+  result?: unknown;
+  executed?: boolean;
+}
+
+export interface ApprovalItem {
+  id: number;
+  action_type: string;
+  title: string;
+  payload: Record<string, unknown>;
+  status: string;
+  result?: unknown;
+  created_at?: string;
 }
 
 async function getJSON<T>(path: string): Promise<T> {
@@ -70,6 +81,20 @@ export const listAttempts = () => getJSON<IndexAttempt[]>("/knowledge/index-atte
 export const listSessions = () => getJSON<ChatSession[]>("/chat-sessions");
 export const getStatus = () => getJSON<any>("/admin/status");
 export const listTraces = () => getJSON<any[]>("/admin/traces");
+export const listApprovals = () => getJSON<ApprovalItem[]>("/approvals");
+export const listOpsTickets = () => getJSON<any[]>("/ops/tickets");
+export const listToolsRegistry = () => getJSON<any[]>("/tools");
+export const listSlack = () => getJSON<any[]>("/slack/messages");
+export const getDataOverview = () => getJSON<any>("/data/overview");
+
+export async function approveApproval(id: number) {
+  const r = await fetch(`${API_BASE}/approvals/${id}/approve`, { method: "POST" });
+  return r.json();
+}
+export async function rejectApproval(id: number) {
+  const r = await fetch(`${API_BASE}/approvals/${id}/reject`, { method: "POST" });
+  return r.json();
+}
 
 export async function createPersona(body: {
   name: string;
@@ -109,6 +134,7 @@ export async function chatStream(
     onNode?: (step: NodeStep) => void;
     onTool?: (step: ToolStep) => void;
     onCitations?: (citations: Citation[]) => void;
+    onApproval?: (a: ApprovalItem) => void;
     onToken?: (t: string) => void;
     onClarification?: (text: string) => void;
     onDone?: () => void;
@@ -142,6 +168,7 @@ export async function chatStream(
       else if (type === "node") handlers.onNode?.(JSON.parse(data));
       else if (type === "tool") handlers.onTool?.(JSON.parse(data));
       else if (type === "citations") handlers.onCitations?.(JSON.parse(data));
+      else if (type === "approval") handlers.onApproval?.(JSON.parse(data));
       else if (type === "token") handlers.onToken?.(data);
       else if (type === "clarification") handlers.onClarification?.(JSON.parse(data).text);
       else if (type === "done") handlers.onDone?.();
